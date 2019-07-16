@@ -1,35 +1,63 @@
 package com.kaansonmezoz.shapeshifter.objectfield;
 
 import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
+import com.kaansonmezoz.shapeshifter.exceptions.ExceptionMessageFactory;
 import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
 
 import java.lang.reflect.Field;
 
 public class ObjectFieldOperations {
-    public ObjectFieldOperations(){}
+    private Field[] targetPrivateFields;
+    private Field[] targetPublicFields;
+    private String className;
+
+    public ObjectFieldOperations(Class targetClass){
+        targetPrivateFields = targetClass.getDeclaredFields();
+        targetPublicFields = targetClass.getFields();
+        className = targetClass.getName();
+    }
 
     private void setTargetField(){}
 
-    private Field getTargetField(String fieldName, Class targetClass){
-        Field targetField;
+    private Field getTargetField(String fieldName) throws ShapeShifterException {
+        Field targetField = getTargetPublicField(fieldName);
 
-        try{
-            targetField = getTargetPublicField(fieldName, targetClass);
-        }catch(NoSuchFieldException ex){
-            try {
-                targetField = getTargetPrivateField(fieldName, targetClass);
-            } catch (NoSuchFieldException e) {
-                throw new ShapeShifterException(ErrorType.NoSuchFieldInTargetObject);
+        if(targetField == null){
+            return targetField;
+        }
+        else{
+            targetField = getTargetPrivateField(fieldName);
+
+            if(targetField != null){
+                return targetField;
+            }
+            else{
+                String errorMessage = new ExceptionMessageFactory().getExceptionMessageFor(
+                        ErrorType.NoSuchFieldInTargetObject, fieldName, className
+                );
+
+                throw new ShapeShifterException(errorMessage);
             }
         }
+
     }
 
-    private Field getTargetPublicField(String fieldName, Class targetClass) throws NoSuchFieldException{
-        return targetClass.getField(fieldName);
+    private Field getTargetPublicField(String fieldName){
+        for(Field field: targetPublicFields){
+            if(field.getName().equals(fieldName)){
+                return field;
+            }
+        }
+        return null;
     }
 
-    private Field getTargetPrivateField(String fieldName, Class targetClass) throws NoSuchFieldException{
-        return targetClass.getDeclaredField(fieldName);
+    private Field getTargetPrivateField(String fieldName){
+        for(Field field: targetPrivateFields){
+            if(field.getName().equals(fieldName)){
+                return field;
+            }
+        }
+        return null;
     }
 
 }
