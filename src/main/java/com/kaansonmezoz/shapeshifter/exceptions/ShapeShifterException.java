@@ -1,5 +1,7 @@
 package com.kaansonmezoz.shapeshifter.exceptions;
 
 public class ShapeShifterException extends Exception {
-    //TODO: Buralar daha detaylı bir hale getirilmeli
+    public ShapeShifterException(String message){
+        super(message);
+    }
 }
