@@ -1,10 +1,9 @@
 package com.kaansonmezoz.shapeshifter;
 
-import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
-import com.kaansonmezoz.shapeshifter.exceptions.ExceptionMessageFactory;
-import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
+import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,52 +30,36 @@ public class ShapeShifter {
         targetFields = getAllFieldsAsHashMap(targetClass);
     }
 
-    public void map(){ //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
-        sourceFields.forEach((sourceField) -> {
-            String sourceFieldName = sourceField.getName();
+    public void map() throws IllegalAccessException{ //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
+        String sourceFieldName;
+
+        for(Field sourceField: sourceFields){
+            sourceFieldName = sourceField.getName();
 
             if(isSourceFieldExistInTarget(sourceFieldName)){
-
-
+                setTargetField(sourceField);
             }
-        });
-
+        }
     }
 
     private void setTargetField(Field sourceField) throws IllegalAccessException {
         Field targetField = getTargetField(sourceField.getName());
 
-        //TODO: Access modifierlara gore set etme islemi yapilacak
-        //TODO: Once accessible yap ilgil field'ı sonra veriyi set et. Ardindan tekrar eski haline geri getir !
-
         /*
-                ----------------------- USEFUL RESOURCES ----------------------------
-
-                https://stackoverflow.com/questions/3301635/change-private-static-final-field-using-java-reflection
-                https://www.google.com/search?q=field+how+to+set+modifier+java&oq=field+how+to+set+modifier+java&aqs=chrome..69i57.6868j0j1&sourceid=chrome&ie=UTF-8
-                https://stackoverflow.com/questions/39053175/how-to-find-the-access-modifier-of-a-member-using-java-reflection
-                http://tutorials.jenkov.com/java/access-modifiers.html
-                https://www.google.com/search?q=field+get+access+modifier+java&oq=field+get+access+modifier+java&aqs=chrome..69i57j33l2.4916j1j1&sourceid=chrome&ie=UTF-8
-                https://www.tutorialspoint.com/javareflect/javareflect_field_getmodifiers.htm
-                https://www.google.com/search?q=field+getmodifiers&oq=field.getMod&aqs=chrome.1.69i57j0l5.6020j0j1&sourceid=chrome&ie=UTF-8
-                https://stackoverflow.com/questions/13400075/reflection-generic-get-field-value
-                https://www.google.com/search?q=get+field+value+reflection+java&oq=get+field+value+reflection+java&aqs=chrome..69i57j0l5.5606j0j1&sourceid=chrome&ie=UTF-8
-                https://stackoverflow.com/questions/32716952/set-private-field-value-with-reflection
-                https://www.google.com/search?q=how+to+set+private+field+reflection+java&oq=how+to+set+private+field+reflection+java&aqs=chrome..69i57j0l3.5853j0j1&sourceid=chrome&ie=UTF-8
-                https://stackoverflow.com/questions/18852059/java-list-containsobject-with-field-value-equal-to-x
-
-
-
          */
 
         int accessModifier = targetField.getModifiers();
 
-        targetField.set(targetObject, sourceField.get(sourceObject));
-    }
 
-    //TODO: PrivateField'larda setter ve getter olmalı source'ta. Ama target object için böyle bir durum söz konuus değil
-    //TODO: yani önce normal bir şekilde set edebiliyor muyuz ona bakmamız lazım edemiyorsak setter aramamız lazım.
-    //TODO: setter yoksa ve herhangi bir şekilde set edemiyorsak değeri hata vermemiz gerekiyor
+        if(Modifier.isPublic(accessModifier)){
+            callSetterMethodFor(sourceField, targetField);
+        }
+        else{
+            targetField.setAccessible(true);
+            callSetterMethodFor(sourceField, targetField);
+            targetField.setAccessible(false);
+        }
+    }
 
     private boolean isSourceFieldExistInTarget(String sourceFieldName){
         return targetFields.containsKey(sourceFieldName);
@@ -104,4 +87,37 @@ public class ShapeShifter {
 
         return fieldsHashMap;
     }
+
+    private void callSetterMethodFor(Field sourceField, Field targetField) throws IllegalAccessException{
+        String fieldType = sourceField.getType().getTypeName();
+
+        if(fieldType.equals(PrimitiveTypes.BOOLEAN)){
+            targetField.setBoolean(targetObject, sourceField.getBoolean(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.BYTE)){
+            targetField.setByte(targetObject, sourceField.getByte(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.CHAR)){
+            targetField.setChar(targetObject, sourceField.getChar(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.DOUBLE)){
+            targetField.setDouble(targetObject, sourceField.getDouble(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.FLOAT)){
+            targetField.setFloat(targetObject, sourceField.getFloat(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.INT)){
+            targetField.setInt(targetObject, sourceField.getInt(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.LONG)){
+            targetField.setInt(targetObject, sourceField.getInt(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.SHORT)){
+            targetField.setShort(targetObject, sourceField.getShort(sourceObject));
+        }
+        else{
+            targetField.set(targetObject, sourceField.get(sourceObject));
+        }
+    }
+
 }
