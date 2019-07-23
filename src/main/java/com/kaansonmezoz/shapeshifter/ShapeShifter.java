@@ -3,6 +3,7 @@ package com.kaansonmezoz.shapeshifter;
 import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
 import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
 import com.kaansonmezoz.shapeshifter.exceptions.ExceptionMessageFactory;
+import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
 import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterRuntimeException;
 
 import java.lang.reflect.Field;
@@ -32,7 +33,7 @@ public class ShapeShifter {
         targetFields = getAllFieldsAsHashMap(targetClass);
     }
 
-    public void map(){ //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
+    public void map() throws ShapeShifterException { //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
         String sourceFieldName;
 
         try{
@@ -41,6 +42,14 @@ public class ShapeShifter {
 
                 if(isSourceFieldExistInTarget(sourceFieldName)){
                     setTargetField(sourceField);
+                }
+                else{
+                    String message = new ExceptionMessageFactory().getExceptionMessageFor(
+                            ErrorType.NoSuchFieldInTargetObject,
+                            sourceFieldName,
+                            targetClass.getCanonicalName()
+                    );
+                    throw new ShapeShifterException(message);
                 }
             }
         }catch(IllegalAccessException ex){
