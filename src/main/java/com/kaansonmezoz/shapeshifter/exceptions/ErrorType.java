@@ -1,5 +1,6 @@
 package com.kaansonmezoz.shapeshifter.exceptions;
 
 public enum ErrorType {
-    NoSuchFieldInTargetObject
+    NoSuchFieldInTargetObject,
+    IllegalAccessToPrivateField
 }
