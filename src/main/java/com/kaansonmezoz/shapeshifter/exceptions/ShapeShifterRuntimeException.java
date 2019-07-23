@@ -1,7 +1,7 @@
 package com.kaansonmezoz.shapeshifter.exceptions;
 
-public class ShapeShifterException extends RuntimeException {
-    public ShapeShifterException(String message){
+public class ShapeShifterRuntimeException extends RuntimeException {
+    public ShapeShifterRuntimeException(String message) {
         super(message);
     }
 }
