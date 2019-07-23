@@ -1,6 +1,6 @@
 package com.kaansonmezoz.shapeshifter.exceptions;
 
-public class ShapeShifterException extends Exception {
+public class ShapeShifterException extends RuntimeException {
     public ShapeShifterException(String message){
         super(message);
     }

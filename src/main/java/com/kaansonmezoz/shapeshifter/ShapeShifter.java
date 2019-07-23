@@ -1,10 +1,12 @@
 package com.kaansonmezoz.shapeshifter;
 
 import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
+import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
+import com.kaansonmezoz.shapeshifter.exceptions.ExceptionMessageFactory;
+import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterRuntimeException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -30,26 +32,29 @@ public class ShapeShifter {
         targetFields = getAllFieldsAsHashMap(targetClass);
     }
 
-    public void map() throws IllegalAccessException{ //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
+    public void map(){ //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
         String sourceFieldName;
 
-        for(Field sourceField: sourceFields){
-            sourceFieldName = sourceField.getName();
+        try{
+            for(Field sourceField: sourceFields){
+                sourceFieldName = sourceField.getName();
 
-            if(isSourceFieldExistInTarget(sourceFieldName)){
-                setTargetField(sourceField);
+                if(isSourceFieldExistInTarget(sourceFieldName)){
+                    setTargetField(sourceField);
+                }
             }
+        }catch(IllegalAccessException ex){
+            ExceptionMessageFactory factory = new ExceptionMessageFactory();
+            String message = factory.getExceptionMessageFor(ErrorType.IllegalAccessToPrivateField, ex.getMessage());
+            throw new ShapeShifterRuntimeException(message);
         }
+
     }
 
     private void setTargetField(Field sourceField) throws IllegalAccessException {
         Field targetField = getTargetField(sourceField.getName());
 
-        /*
-         */
-
         int accessModifier = targetField.getModifiers();
-
 
         if(Modifier.isPublic(accessModifier)){
             callSetterMethodFor(sourceField, targetField);
@@ -70,14 +75,14 @@ public class ShapeShifter {
     }
 
     private List<Field> getAllFieldsAsList(Class objectClass){
-        ArrayList<Field> fields = new ArrayList<Field>(Arrays.asList(objectClass.getFields()));
+        List<Field> fields = Arrays.asList(objectClass.getFields());
         fields.addAll(Arrays.asList(objectClass.getDeclaredFields()));
 
         return fields;
     }
 
     private HashMap<String, Field> getAllFieldsAsHashMap(Class objectClass){
-        HashMap<String, Field> fieldsHashMap = new HashMap<String, Field>();
+        HashMap<String, Field> fieldsHashMap = new HashMap<>();
         List<Field> fields = getAllFieldsAsList(objectClass);
 
         fields.forEach((field) -> {
