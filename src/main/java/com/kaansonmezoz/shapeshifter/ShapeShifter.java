@@ -4,7 +4,6 @@ import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
 import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
 import com.kaansonmezoz.shapeshifter.exceptions.ExceptionThrower;
 import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
-import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterRuntimeException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
