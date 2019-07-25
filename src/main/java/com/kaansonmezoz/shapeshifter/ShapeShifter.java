@@ -2,7 +2,7 @@ package com.kaansonmezoz.shapeshifter;
 
 import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
 import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
-import com.kaansonmezoz.shapeshifter.exceptions.ExceptionMessageFactory;
+import com.kaansonmezoz.shapeshifter.exceptions.ExceptionThrower;
 import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
 import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterRuntimeException;
 
@@ -44,18 +44,22 @@ public class ShapeShifter {
                     setTargetField(sourceField);
                 }
                 else{
-                    String message = new ExceptionMessageFactory().getExceptionMessageFor(
+                    ExceptionThrower thrower = new ExceptionThrower();
+
+                    thrower.throwExceptionForError(
                             ErrorType.NoSuchFieldInTargetObject,
                             sourceFieldName,
                             targetClass.getCanonicalName()
                     );
-                    throw new ShapeShifterException(message);
                 }
             }
         }catch(IllegalAccessException ex){
-            ExceptionMessageFactory factory = new ExceptionMessageFactory();
-            String message = factory.getExceptionMessageFor(ErrorType.IllegalAccessToPrivateField, ex.getMessage());
-            throw new ShapeShifterRuntimeException(message);
+            ExceptionThrower thrower = new ExceptionThrower();
+
+            thrower.throwExceptionForError(
+                    ErrorType.IllegalAccessToPrivateField,
+                    ex.getMessage()
+            );
         }
 
     }
