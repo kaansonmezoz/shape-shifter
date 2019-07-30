@@ -2,7 +2,6 @@ package com.kaansonmezoz.shapeshifter;
 
 import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
 import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
-import com.kaansonmezoz.shapeshifter.exceptions.ExceptionThrower;
 import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
 
 import java.lang.reflect.Field;
@@ -21,14 +20,17 @@ public class ShapeShifter {
     private List<Field> sourceFields;
     private HashMap<String, Field> targetFields;
 
-    public ShapeShifter(Object sourceObject, Object targetObject){
+    public ShapeShifter(Object sourceObject){
         this.sourceObject = sourceObject;
-        this.targetObject = targetObject;
-
         sourceClass = sourceObject.getClass();
-        targetClass = targetObject.getClass();
-
         sourceFields = getAllFieldsAsList(sourceClass);
+    }
+
+    public ShapeShifter(Object sourceObject, Object targetObject){
+        this(sourceObject);
+
+        this.targetObject = targetObject;
+        targetClass = targetObject.getClass();
         targetFields = getAllFieldsAsHashMap(targetClass);
     }
 
@@ -43,10 +45,11 @@ public class ShapeShifter {
                     setTargetField(sourceField);
                 }
                 else{
-                    ExceptionThrower thrower = new ExceptionThrower();
+                    // Belli bir error tipine gore exception firlatmamizi sagliyor
+                    // ne tarz bir yol izlemek istedigimize bagli birazcik da cozum aslında
+                    // amac abstarct bir yapı saglamak bunun icin olabilecek alternatif yollari da dusunelim bence
 
-                    thrower.throwExceptionForError(
-                            ErrorType.NoSuchFieldInTargetObject,
+                    ErrorType.NO_SUCH_FIELD_IN_TARGET_OBJECT.throwException(
                             sourceFieldName,
                             targetClass.getCanonicalName()
                     );
@@ -60,7 +63,10 @@ public class ShapeShifter {
                     ex.getMessage()
             );
         }
+    }
 
+    public Object map(Class targetClass){
+        return null;
     }
 
     private void setTargetField(Field sourceField) throws IllegalAccessException {
@@ -108,33 +114,32 @@ public class ShapeShifter {
     private void callSetterMethodFor(Field sourceField, Field targetField) throws IllegalAccessException{
         String fieldType = sourceField.getType().getTypeName();
 
-        if(fieldType.equals(PrimitiveTypes.BOOLEAN)){
+        if(fieldType.equals(PrimitiveTypes.BOOLEAN.toString())){
             targetField.setBoolean(targetObject, sourceField.getBoolean(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.BYTE)){
+        else if(fieldType.equals(PrimitiveTypes.BYTE.toString())){
             targetField.setByte(targetObject, sourceField.getByte(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.CHAR)){
+        else if(fieldType.equals(PrimitiveTypes.CHAR.toString())){
             targetField.setChar(targetObject, sourceField.getChar(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.DOUBLE)){
+        else if(fieldType.equals(PrimitiveTypes.DOUBLE.toString())){
             targetField.setDouble(targetObject, sourceField.getDouble(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.FLOAT)){
+        else if(fieldType.equals(PrimitiveTypes.FLOAT.toString())){
             targetField.setFloat(targetObject, sourceField.getFloat(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.INT)){
+        else if(fieldType.equals(PrimitiveTypes.INT.toString())){
             targetField.setInt(targetObject, sourceField.getInt(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.LONG)){
-            targetField.setInt(targetObject, sourceField.getInt(sourceObject));
+        else if(fieldType.equals(PrimitiveTypes.LONG.toString())){
+            targetField.setLong(targetObject, sourceField.getInt(sourceObject));
         }
-        else if(fieldType.equals(PrimitiveTypes.SHORT)){
+        else if(fieldType.equals(PrimitiveTypes.SHORT.toString())){
             targetField.setShort(targetObject, sourceField.getShort(sourceObject));
         }
         else{
             targetField.set(targetObject, sourceField.get(sourceObject));
         }
     }
-
 }
