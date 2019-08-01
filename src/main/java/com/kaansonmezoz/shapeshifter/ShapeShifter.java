@@ -49,6 +49,9 @@ public class ShapeShifter {
                     // ne tarz bir yol izlemek istedigimize bagli birazcik da cozum aslında
                     // amac abstarct bir yapı saglamak bunun icin olabilecek alternatif yollari da dusunelim bence
 
+                    //TODO: Belki de field bulamazsa bos gecmeliyiz hata da fırlatmak yerine !
+                    //TODO: Daha iyi bir sonuc verebilir bize 
+
                     ErrorType.NO_SUCH_FIELD_IN_TARGET_OBJECT.throwException(
                             sourceFieldName,
                             targetClass.getCanonicalName()
@@ -56,10 +59,7 @@ public class ShapeShifter {
                 }
             }
         }catch(IllegalAccessException ex){
-            ExceptionThrower thrower = new ExceptionThrower();
-
-            thrower.throwExceptionForError(
-                    ErrorType.IllegalAccessToPrivateField,
+            ErrorType.ILLEGAL_ACCESS_TO_PRIVATE_FIELD.throwRuntimeException(
                     ex.getMessage()
             );
         }

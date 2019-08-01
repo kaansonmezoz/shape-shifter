@@ -43,26 +43,24 @@ public enum ErrorType {
 
     private String errorMessageTemplate;
 
-    private ExceptionThrower exceptionThrower;
-
     ErrorType(String errorMessageTemplate){
         this.errorMessageTemplate = errorMessageTemplate;
-        exceptionThrower = ExceptionThrower.getInstance();
     }
 
-    public String getErrorMessageTemplate(){
-        return errorMessageTemplate;
+    //TODO: Simdilik thrower'ların olmadigi bir dunya olarak bu sekilde bir seyler onerebilirim
+    //TODO: Daha iyi bir alternatif bulunabilir elbette
+
+    public void throwRuntimeException(String ... exceptionMessageArguments){
+        throw new ShapeShifterRuntimeException(
+                errorMessageTemplate,
+                exceptionMessageArguments
+        );
     }
 
-    public void throwException(String exceptionMessage){
-        exceptionThrower.throwException(exceptionMessage);
-    }
-
-    public void throwException(String targetClassName, String exceptionMessage){
-        exceptionThrower.throwException(errorMessageTemplate, targetClassName, exceptionMessage);
-    }
-
-    public void throwException(String sourceFieldName, String targetClassName, String exceptionMessage){
-        exceptionThrower.throwException(errorMessageTemplate, sourceFieldName, targetClassName, exceptionMessage);
+    public void throwException(String ... exceptionMessageArguments) throws ShapeShifterException {
+        throw new ShapeShifterException(
+                errorMessageTemplate,
+                exceptionMessageArguments
+        );
     }
 }
