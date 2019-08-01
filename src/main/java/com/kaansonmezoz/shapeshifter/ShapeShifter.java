@@ -6,6 +6,7 @@ import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,7 @@ public class ShapeShifter {
     }
 
     public void map() throws ShapeShifterException { //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
-        String sourceFieldName;
+        String sourceFieldName = null;
 
         try{
             for(Field sourceField: sourceFields){
@@ -50,7 +51,7 @@ public class ShapeShifter {
                     // amac abstarct bir yapı saglamak bunun icin olabilecek alternatif yollari da dusunelim bence
 
                     //TODO: Belki de field bulamazsa bos gecmeliyiz hata da fırlatmak yerine !
-                    //TODO: Daha iyi bir sonuc verebilir bize 
+                    //TODO: Daha iyi bir sonuc verebilir bize
 
                     ErrorType.NO_SUCH_FIELD_IN_TARGET_OBJECT.throwException(
                             sourceFieldName,
@@ -60,6 +61,7 @@ public class ShapeShifter {
             }
         }catch(IllegalAccessException ex){
             ErrorType.ILLEGAL_ACCESS_TO_PRIVATE_FIELD.throwRuntimeException(
+                    sourceFieldName,
                     ex.getMessage()
             );
         }
@@ -72,15 +74,33 @@ public class ShapeShifter {
     private void setTargetField(Field sourceField) throws IllegalAccessException {
         Field targetField = getTargetField(sourceField.getName());
 
-        int accessModifier = targetField.getModifiers();
+        int targetAccessModifier = targetField.getModifiers();
+        int sourceAccessModifier = sourceField.getModifiers();
 
-        if(Modifier.isPublic(accessModifier)){
-            callSetterMethodFor(sourceField, targetField);
+        if(Modifier.isPublic(targetAccessModifier)){
+            if(Modifier.isPublic(sourceAccessModifier)){
+                callSetterMethodFor(sourceField, targetField);
+            }
+            else{
+                sourceField.setAccessible(true);
+                callSetterMethodFor(sourceField, targetField);
+                sourceField.setAccessible(false);
+            }
+
         }
         else{
-            targetField.setAccessible(true);
-            callSetterMethodFor(sourceField, targetField);
-            targetField.setAccessible(false);
+            if(Modifier.isPublic(sourceAccessModifier)){
+                targetField.setAccessible(true);
+                callSetterMethodFor(sourceField, targetField);
+                targetField.setAccessible(false);
+            }
+            else{
+                sourceField.setAccessible(true);
+                targetField.setAccessible(true);
+                callSetterMethodFor(sourceField, targetField);
+                targetField.setAccessible(false);
+                sourceField.setAccessible(false);
+            }
         }
     }
 
@@ -93,7 +113,7 @@ public class ShapeShifter {
     }
 
     private List<Field> getAllFieldsAsList(Class objectClass){
-        List<Field> fields = Arrays.asList(objectClass.getFields());
+        List<Field> fields = new ArrayList<Field>(Arrays.asList(objectClass.getFields()));
         fields.addAll(Arrays.asList(objectClass.getDeclaredFields()));
 
         return fields;
