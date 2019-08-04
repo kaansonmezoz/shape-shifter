@@ -10,7 +10,6 @@ public enum PrimitiveTypes {
     LONG("long"),
     SHORT("short");
 
-
     private String type;
 
     PrimitiveTypes(String type) {
