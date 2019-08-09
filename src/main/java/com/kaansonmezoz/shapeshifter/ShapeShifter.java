@@ -1,37 +1,165 @@
 package com.kaansonmezoz.shapeshifter;
 
-import com.kaansonmezoz.shapeshifter.objectfield.ObjectFieldOperations;
+import com.kaansonmezoz.shapeshifter.enums.PrimitiveTypes;
+import com.kaansonmezoz.shapeshifter.exceptions.ErrorType;
+import com.kaansonmezoz.shapeshifter.exceptions.ShapeShifterException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 public class ShapeShifter {
-    public ShapeShifter(){}
+    private Object sourceObject;
+    private Object targetObject;
 
-    public void map(Object sourceObject, Object targetObject){
-        Field[] publicFields = sourceObject.getClass().getFields();
-        Field[] privateFields = sourceObject.getClass().getDeclaredFields();
+    private Class sourceClass;
+    private Class targetClass;
 
+    private List<Field> sourceFields;
+    private HashMap<String, Field> targetFields;
+
+    public ShapeShifter(Object sourceObject){
+        this.sourceObject = sourceObject;
+        sourceClass = sourceObject.getClass();
+        sourceFields = getAllFieldsAsList(sourceClass);
     }
 
-    //TODO: PrivateField'larda setter ve getter olmalı source'ta. Ama target object için böyle bir durum söz konuus değil
-    //TODO: yani önce normal bir şekilde set edebiliyor muyuz ona bakmamız lazım edemiyorsak setter aramamız lazım.
-    //TODO: setter yoksa ve herhangi bir şekilde set edemiyorsak değeri hata vermemiz gerekiyor
+    public ShapeShifter(Object sourceObject, Object targetObject){
+        this(sourceObject);
 
+        this.targetObject = targetObject;
+        targetClass = targetObject.getClass();
+        targetFields = getAllFieldsAsHashMap(targetClass);
+    }
 
-    //TODO: field yoksa exception firlatacak sekilde ayarladik olayi ki en azindan ilgili field'in adini alarak
-    //TODO: o field eger crucial ise bizler icin handle edilmesini saglayabiliriz
-    private void mapPublicFields(Field[] sourcePublicFields, Object targetObject){
-        ObjectFieldOperations objectFieldOperations = new ObjectFieldOperations();
+    public void map() throws ShapeShifterException { //TODO: Bunun bir de sadece targetClass verilmis halini yapalim
+        String sourceFieldName = null;
 
-        Class targetClass = targetObject.getClass();
+        try{
+            for(Field sourceField: sourceFields){
+                sourceFieldName = sourceField.getName();
 
-        for(Field publicField: sourcePublicFields){
+                if(isSourceFieldExistInTarget(sourceFieldName)){
+                    setTargetField(sourceField);
+                }
+                else{
+                    // Belli bir error tipine gore exception firlatmamizi sagliyor
+                    // ne tarz bir yol izlemek istedigimize bagli birazcik da cozum aslında
+                    // amac abstarct bir yapı saglamak bunun icin olabilecek alternatif yollari da dusunelim bence
 
+                    //TODO: Belki de field bulamazsa bos gecmeliyiz hata da fırlatmak yerine !
+                    //TODO: Daha iyi bir sonuc verebilir bize
+
+                    ErrorType.NO_SUCH_FIELD_IN_TARGET_OBJECT.throwException(
+                            sourceFieldName,
+                            targetClass.getCanonicalName()
+                    );
+                }
+            }
+        }catch(IllegalAccessException ex){
+            ErrorType.ILLEGAL_ACCESS_TO_PRIVATE_FIELD.throwRuntimeException(
+                    sourceFieldName,
+                    ex.getMessage()
+            );
         }
     }
 
+    public Object map(Class targetClass){
+        return null;
+    }
 
-    private void mapPrivateFields(){}
+    private void setTargetField(Field sourceField) throws IllegalAccessException {
+        Field targetField = getTargetField(sourceField.getName());
 
+        int targetAccessModifier = targetField.getModifiers();
+        int sourceAccessModifier = sourceField.getModifiers();
 
+        if(Modifier.isPublic(targetAccessModifier)){
+            if(Modifier.isPublic(sourceAccessModifier)){
+                callSetterMethodFor(sourceField, targetField);
+            }
+            else{
+                sourceField.setAccessible(true);
+                callSetterMethodFor(sourceField, targetField);
+                sourceField.setAccessible(false);
+            }
+
+        }
+        else{
+            if(Modifier.isPublic(sourceAccessModifier)){
+                targetField.setAccessible(true);
+                callSetterMethodFor(sourceField, targetField);
+                targetField.setAccessible(false);
+            }
+            else{
+                sourceField.setAccessible(true);
+                targetField.setAccessible(true);
+                callSetterMethodFor(sourceField, targetField);
+                targetField.setAccessible(false);
+                sourceField.setAccessible(false);
+            }
+        }
+    }
+
+    private boolean isSourceFieldExistInTarget(String sourceFieldName){
+        return targetFields.containsKey(sourceFieldName);
+    }
+
+    private Field getTargetField(String fieldName){
+        return targetFields.get(fieldName);
+    }
+
+    private List<Field> getAllFieldsAsList(Class objectClass){
+        List<Field> fields = new ArrayList<Field>(Arrays.asList(objectClass.getFields()));
+        fields.addAll(Arrays.asList(objectClass.getDeclaredFields()));
+
+        return fields;
+    }
+
+    private HashMap<String, Field> getAllFieldsAsHashMap(Class objectClass){
+        HashMap<String, Field> fieldsHashMap = new HashMap<>();
+        List<Field> fields = getAllFieldsAsList(objectClass);
+
+        fields.forEach((field) -> {
+            String fieldName = field.getName();
+            fieldsHashMap.put(fieldName, field);
+        });
+
+        return fieldsHashMap;
+    }
+
+    private void callSetterMethodFor(Field sourceField, Field targetField) throws IllegalAccessException{
+        String fieldType = sourceField.getType().getTypeName();
+
+        if(fieldType.equals(PrimitiveTypes.BOOLEAN.toString())){
+            targetField.setBoolean(targetObject, sourceField.getBoolean(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.BYTE.toString())){
+            targetField.setByte(targetObject, sourceField.getByte(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.CHAR.toString())){
+            targetField.setChar(targetObject, sourceField.getChar(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.DOUBLE.toString())){
+            targetField.setDouble(targetObject, sourceField.getDouble(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.FLOAT.toString())){
+            targetField.setFloat(targetObject, sourceField.getFloat(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.INT.toString())){
+            targetField.setInt(targetObject, sourceField.getInt(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.LONG.toString())){
+            targetField.setLong(targetObject, sourceField.getInt(sourceObject));
+        }
+        else if(fieldType.equals(PrimitiveTypes.SHORT.toString())){
+            targetField.setShort(targetObject, sourceField.getShort(sourceObject));
+        }
+        else{
+            targetField.set(targetObject, sourceField.get(sourceObject));
+        }
+    }
 }
